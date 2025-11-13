@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DualCardPredictor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .card-option {
+            transition: all 0.3s ease;
+        }
+        .card-option:hover {
+            transform: translateY(-2px);
+        }
+        .sequence-box {
+            min-height: 100px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <h1 class="text-3xl font-bold text-center mb-8 text-blue-600">DualCardPredictor</h1>
+        
+        <!-- Main Selection Buttons -->
+        <div class="grid grid-cols-3 gap-4 mb-8">
+            <button id="lowBtn" class="bg-blue-500 text-white py-4 rounded-lg shadow-lg hover:bg-blue-600 transition-all card-option">
+                LOW
+            </button>
+            <button id="tieBtn" class="bg-gray-500 text-white py-4 rounded-lg shadow-lg hover:bg-gray-600 transition-all card-option">
+                TIE
+            </button>
+            <button id="highBtn" class="bg-red-500 text-white py-4 rounded-lg shadow-lg hover:bg-red-600 transition-all card-option">
+                HIGH
+            </button>
+        </div>
+
+        <!-- Sub-selection Panel -->
+        <div id="subSelectionPanel" class="hidden bg-white p-4 rounded-lg shadow-lg mb-8">
+            <div id="subOptions" class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                <!-- Dynamically filled -->
+            </div>
+        </div>
+
+        <!-- Sequence Box -->
+        <div class="bg-white rounded-lg shadow-lg p-4 mb-8">
+            <h2 class="text-lg font-semibold mb-2">Sequence</h2>
+            <div id="sequenceBox" class="sequence-box border border-gray-200 rounded p-2 text-gray-700">
+                <!-- Sequences will be added here -->
+            </div>
+        </div>
+
+        <!-- Prediction Section -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+            <button id="predictBtn" class="bg-green-500 text-white py-3 rounded-lg shadow-lg hover:bg-green-600 transition-all">
+                Predict Next
+            </button>
+            <div id="predictionResult" class="bg-white p-4 rounded-lg shadow-lg hidden">
+                <h3 class="font-semibold mb-2">Prediction:</h3>
+                <p id="predictionText" class="text-lg text-green-600"></p>
+                <p id="confidenceText" class="text-sm text-gray-600"></p>
+            </div>
+        </div>
+
+        <!-- Feedback Buttons -->
+        <div id="feedbackButtons" class="grid grid-cols-2 gap-4 hidden">
+            <button id="correctBtn" class="bg-green-500 text-white py-3 rounded-lg shadow-lg hover:bg-green-600 transition-all">
+                <i class="bi bi-check-lg"></i> Correct
+            </button>
+            <button id="incorrectBtn" class="bg-red-500 text-white py-3 rounded-lg shadow-lg hover:bg-red-600 transition-all">
+                <i class="bi bi-x-lg"></i> Incorrect
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const state = {
+            sequence: [],
+            currentPrediction: null,
+            LOW_CARDS: ['A', '2', '3', '4', '5', '6'],
+            HIGH_CARDS: ['8', '9', '10', 'J', 'Q', 'K']
+        };
+
+        document.getElementById('lowBtn').addEventListener('click', () => showSubSelection('LOW'));
+        document.getElementById('tieBtn').addEventListener('click', () => addToSequence('Tie', '7'));
+        document.getElementById('highBtn').addEventListener('click', () => showSubSelection('HIGH'));
+        document.getElementById('predictBtn').addEventListener('click', makePrediction);
+
+        function showSubSelection(type) {
+            const panel = document.getElementById('subSelectionPanel');
+            const options = document.getElementById('subOptions');
+            options.innerHTML = '';
+            
+            const cards = type === 'LOW' ? state.LOW_CARDS : state.HIGH_CARDS;
+            cards.forEach(card => {
+                const btn = document.createElement('button');
+                btn.className = 'bg-gray-200 hover:bg-gray-300 py-2 rounded transition-all';
+                btn.textContent = card;
+                btn.onclick = () => addToSequence(type, card);
+                options.appendChild(btn);
+            });
+            
+            panel.classList.remove('hidden');
+        }
+
+        function addToSequence(type, card) {
+            const entry = `${type} - ${card}`;
+            state.sequence.push(entry);
+            updateSequenceBox();
+            document.getElementById('subSelectionPanel').classList.add('hidden');
+        }
+
+        function updateSequenceBox() {
+            const box = document.getElementById('sequenceBox');
+            box.innerHTML = state.sequence.map(seq => `<div class="py-1">${seq}</div>`).join('');
+        }
+
+        function makePrediction() {
+            if (state.sequence.length === 0) {
+                alert('Please add some sequences first!');
+                return;
+            }
+
+            // Simulate AI prediction
+            const predictions = ['Low', 'Tie', 'High'];
+            const cards = [...state.LOW_CARDS, '7', ...state.HIGH_CARDS];
+            const prediction = predictions[Math.floor(Math.random() * predictions.length)];
+            const card = cards[Math.floor(Math.random() * cards.length)];
+            const confidence = Math.floor(Math.random() * 30) + 70; // 70-99%
+
+            state.currentPrediction = `${prediction} - ${card}`;
+
+            // Show prediction
+            document.getElementById('predictionResult').classList.remove('hidden');
+            document.getElementById('predictionText').textContent = state.currentPrediction;
+            document.getElementById('confidenceText').textContent = `Confidence: ${confidence}%`;
+            document.getElementById('feedbackButtons').classList.remove('hidden');
+        }
+
+        // Feedback handlers
+        document.getElementById('correctBtn').onclick = () => handleFeedback(true);
+        document.getElementById('incorrectBtn').onclick = () => handleFeedback(false);
+
+        function handleFeedback(isCorrect) {
+            if (state.currentPrediction) {
+                // Here we would normally send feedback to the backend
+                alert(`Feedback recorded: ${isCorrect ? 'Correct' : 'Incorrect'}`);
+                document.getElementById('predictionResult').classList.add('hidden');
+                document.getElementById('feedbackButtons').classList.add('hidden');
+                state.currentPrediction = null;
+            }
+        }
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
